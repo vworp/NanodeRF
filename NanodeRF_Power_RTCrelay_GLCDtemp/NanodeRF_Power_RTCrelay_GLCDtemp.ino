@@ -115,6 +115,9 @@ unsigned long last_rf;                    // Used to check for regular emontx da
 char line_buf[50];                        // Used to store line of http reply header
 
 unsigned long time60s = -50000;
+
+double consuming, gen, grid;
+int powerexport, powerimport;
 //**********************************************************************************************************************
 // SETUP
 //**********************************************************************************************************************
@@ -186,7 +189,25 @@ void loop () {
           last_rf = millis();                                            // reset lastRF timer
           
           delay(50);                                                     // make sure serial printing finished
-                               
+		
+		  //import or export calculation
+          
+          gen = emontx.power2;   if (gen<15) gen=0;     // set minimum threshold for generation to be recorded  
+          consuming=gen + emontx.power1;             
+          grid=emontx.power1;  
+         
+          if (gen > consuming)                          // if more is being generated than consumed then there must be an export
+          {
+            grid= grid*-1;                              // changes the export to a positive value
+            powerimport=0;                              // as power is being exported power being imported must be zero
+            powerexport=grid;                     
+          }
+          else
+          {
+            powerexport=0;
+            powerimport=grid;
+          }
+                        
           // JSON creation: JSON sent are of the format: {key1:value1,key2:value2} and so on
           
           str.reset();          // Reset json string      
@@ -194,8 +215,11 @@ void loop () {
           str.print("apikey="); str.print(apikey);
           str.print("&json={rf_fail:0");                                       // RF recieved so no failure
           str.print(",power1:");        str.print(emontx.power1);        // Add power reading
-          str.print(",power2:");        str.print(emontx.power2);        // Add power reading
+          str.print(",power2:");        str.print(gen);        // Add power reading
           str.print(",power3:");        str.print(emontx.power3);        // Add power reading
+          str.print(",powerexport:");    str.print(powerexport);
+          str.print(",powerimport:");    str.print(powerimport); 
+ 
           
           str.print(",voltage:");      str.print(emontx.voltage);        // Add emontx battery voltage reading
     
