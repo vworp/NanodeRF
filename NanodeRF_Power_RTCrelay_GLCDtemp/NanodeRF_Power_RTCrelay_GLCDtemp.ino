@@ -64,7 +64,7 @@ public:
     virtual size_t write (uint8_t ch)
         { if (fill < sizeof buf) buf[fill++] = ch; }
     byte fill;
-    char buf[150];
+    char buf[200];
     private:
 };
 PacketBuffer str;
